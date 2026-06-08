@@ -33,14 +33,24 @@ export function AdminLogin() {
 
   async function onSubmit(data: FormData) {
     setError(null)
-    const { error } = await signIn(data.email, data.password)
-    if (error) {
-      setError('Correo o contraseña incorrectos')
-      return
+    try {
+      const result = await Promise.race([
+        signIn(data.email, data.password),
+        new Promise<never>((_, reject) =>
+          setTimeout(() => reject(new Error('timeout')), 10000)
+        ),
+      ])
+      if (result.error) {
+        setError('Correo o contraseña incorrectos')
+        return
+      }
+      setTimeout(() => navigate('/admin'), 300)
+    } catch (e) {
+      const msg = e instanceof Error && e.message === 'timeout'
+        ? 'No se pudo conectar con el servidor. Intenta de nuevo.'
+        : 'Error al iniciar sesión. Intenta de nuevo.'
+      setError(msg)
     }
-    // Check admin status is handled in AuthContext
-    // Small wait for state to update
-    setTimeout(() => navigate('/admin'), 300)
   }
 
   return (
