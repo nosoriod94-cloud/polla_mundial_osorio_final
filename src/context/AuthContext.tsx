@@ -30,13 +30,18 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }
 
   useEffect(() => {
+    const failsafe = setTimeout(() => setLoading(false), 6000)
+
     supabase.auth.getSession().then(async ({ data: { session } }) => {
       setSession(session)
       setUser(session?.user ?? null)
       if (session?.user) {
         setIsAdmin(await checkAdmin(session.user.id))
       }
-    }).finally(() => setLoading(false))
+    }).finally(() => {
+      clearTimeout(failsafe)
+      setLoading(false)
+    })
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (_event, session) => {
