@@ -24,7 +24,11 @@ export function AdminLogin() {
     resolver: zodResolver(schema),
   })
 
-  if (loading) return null
+  if (loading) return (
+    <div className="min-h-screen flex items-center justify-center bg-gray-50">
+      <div className="w-6 h-6 border-2 border-green-600 border-t-transparent rounded-full animate-spin" />
+    </div>
+  )
   if (isAdmin) return <Navigate to="/admin" replace />
 
   async function onSubmit(data: FormData) {

@@ -14,7 +14,6 @@ import { formatFechaHora } from '@/lib/utils'
 import type { PickType } from '@/lib/types'
 
 const matchSchema = z.object({
-  jornada_id: z.string().min(1),
   equipo_local: z.string().min(1, 'Requerido'),
   equipo_visitante: z.string().min(1, 'Requerido'),
   fecha_hora: z.string().min(1, 'Requerido'),
@@ -40,7 +39,7 @@ export function PartidosTab() {
     resolver: zodResolver(matchSchema),
   })
 
-  async function onAddMatch(jornadaId: string, data: Omit<MatchForm, 'jornada_id'>) {
+  async function onAddMatch(jornadaId: string, data: MatchForm) {
     try {
       await createMatch.mutateAsync({ jornada_id: jornadaId, ...data })
       toast.success('Partido agregado')
@@ -151,7 +150,6 @@ export function PartidosTab() {
                     onSubmit={handleSubmit(data => onAddMatch(jornada.id, data))}
                     className="bg-gray-50 rounded-lg border border-dashed border-gray-300 p-3 space-y-2"
                   >
-                    <input type="hidden" value={jornada.id} {...register('jornada_id')} />
                     <div className="grid grid-cols-2 gap-2">
                       <div>
                         <Label className="text-xs">Local</Label>
