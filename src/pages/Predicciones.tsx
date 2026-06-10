@@ -24,7 +24,7 @@ export function Predicciones() {
   const [expandedJornada, setExpandedJornada] = useState<string | null>(null)
 
   const participantQuery = useParticipantByEmail(email)
-  const { data: participant, isLoading: loadingParticipant } = participantQuery
+  const { data: participant, isLoading: loadingParticipant, isError: participantError } = participantQuery
   const { data: jornadas } = useJornadas()
   const { data: matches } = useMatches()
   const { data: myPicks } = usePredictionsByParticipant(participant?.id ?? null)
@@ -85,6 +85,18 @@ export function Predicciones() {
           email={email} status={participantQuery.status} fetchStatus={participantQuery.fetchStatus}
         </p>
       </div>
+    )
+  }
+
+  // Error (e.g. timeout connecting to Supabase)
+  if (participantError) {
+    return (
+      <StatusScreen
+        icon={<XCircle className="h-12 w-12 text-red-400" />}
+        title="Error al buscar tu perfil"
+        message="No se pudo conectar con el servidor. Verifica tu conexión e intenta de nuevo."
+        onBack={() => setEmail(null)}
+      />
     )
   }
 

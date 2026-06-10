@@ -20,12 +20,22 @@ export function useParticipantByEmail(email: string | null) {
   return useQuery({
     queryKey: ['participant', email],
     enabled: !!email,
+    retry: false,
     queryFn: async () => {
-      const { data, error } = await supabase
+      const fetchPromise = supabase
         .from('participants')
         .select('*')
         .eq('email', email!)
         .maybeSingle()
+
+      const result = await Promise.race([
+        fetchPromise,
+        new Promise<never>((_, reject) =>
+          setTimeout(() => reject(new Error('timeout')), 8000)
+        ),
+      ])
+
+      const { data, error } = result
       if (error) throw error
       return data as Participant | null
     },
