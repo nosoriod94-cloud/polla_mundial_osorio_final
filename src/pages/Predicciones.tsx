@@ -23,7 +23,8 @@ export function Predicciones() {
   const [email, setEmail] = useState<string | null>(null)
   const [expandedJornada, setExpandedJornada] = useState<string | null>(null)
 
-  const { data: participant, isLoading: loadingParticipant } = useParticipantByEmail(email)
+  const participantQuery = useParticipantByEmail(email)
+  const { data: participant, isLoading: loadingParticipant } = participantQuery
   const { data: jornadas } = useJornadas()
   const { data: matches } = useMatches()
   const { data: myPicks } = usePredictionsByParticipant(participant?.id ?? null)
@@ -78,8 +79,16 @@ export function Predicciones() {
   // Loading
   if (loadingParticipant) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
+      <div className="min-h-screen flex flex-col items-center justify-center gap-2">
         <p className="text-gray-500">Buscando tu perfil...</p>
+        <p className="text-xs text-gray-400 font-mono">
+          email={email} status={participantQuery.status} fetchStatus={participantQuery.fetchStatus}
+        </p>
+        {participantQuery.error && (
+          <p className="text-xs text-red-500 font-mono max-w-sm text-center break-words">
+            {String(participantQuery.error)}
+          </p>
+        )}
       </div>
     )
   }
