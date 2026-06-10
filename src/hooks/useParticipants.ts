@@ -22,28 +22,13 @@ export function useParticipantByEmail(email: string | null) {
     enabled: !!email,
     retry: false,
     queryFn: async () => {
-      const url = import.meta.env.VITE_SUPABASE_URL as string
-      const key = import.meta.env.VITE_SUPABASE_ANON_KEY as string
-      console.log('[useParticipantByEmail] start raw fetch', { email, url })
-      try {
-        const res = await fetch(
-          `${url}/rest/v1/participants?select=*&email=eq.${encodeURIComponent(email!)}`,
-          {
-            headers: {
-              apikey: key,
-              Authorization: `Bearer ${key}`,
-            },
-          }
-        )
-        console.log('[useParticipantByEmail] raw fetch status', res.status)
-        const json = await res.json()
-        console.log('[useParticipantByEmail] raw fetch json', json)
-        if (!res.ok) throw new Error(JSON.stringify(json))
-        return (Array.isArray(json) ? json[0] ?? null : json) as Participant | null
-      } catch (e) {
-        console.error('[useParticipantByEmail] error', e)
-        throw e
-      }
+      const { data, error } = await supabase
+        .from('participants')
+        .select('*')
+        .eq('email', email!)
+        .maybeSingle()
+      if (error) throw error
+      return data as Participant | null
     },
   })
 }

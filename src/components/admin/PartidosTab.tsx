@@ -10,7 +10,7 @@ import { Label } from '@/components/ui/label'
 import { Badge } from '@/components/ui/badge'
 import { useJornadas } from '@/hooks/useJornadas'
 import { useMatches, useCreateMatch, useDeleteMatch, useSetMatchResult } from '@/hooks/useMatches'
-import { formatFechaHora } from '@/lib/utils'
+import { formatFechaHora, colombiaLocalToUTCISOString } from '@/lib/utils'
 import type { PickType } from '@/lib/types'
 
 const matchSchema = z.object({
@@ -41,7 +41,11 @@ export function PartidosTab() {
 
   async function onAddMatch(jornadaId: string, data: MatchForm) {
     try {
-      await createMatch.mutateAsync({ jornada_id: jornadaId, ...data })
+      await createMatch.mutateAsync({
+        jornada_id: jornadaId,
+        ...data,
+        fecha_hora: colombiaLocalToUTCISOString(data.fecha_hora),
+      })
       toast.success('Partido agregado')
       setAddingToJornada(null)
       reset()

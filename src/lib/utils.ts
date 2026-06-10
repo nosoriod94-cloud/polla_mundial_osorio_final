@@ -1,7 +1,6 @@
 import { clsx, type ClassValue } from 'clsx'
 import { twMerge } from 'tailwind-merge'
-import { format, parseISO } from 'date-fns'
-import { es } from 'date-fns/locale'
+import { parseISO } from 'date-fns'
 
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs))
@@ -9,16 +8,27 @@ export function cn(...inputs: ClassValue[]) {
 
 export function formatFechaHora(isoString: string): string {
   try {
-    return format(parseISO(isoString), "d 'de' MMMM, HH:mm", { locale: es })
+    return new Intl.DateTimeFormat('es-CO', {
+      timeZone: 'America/Bogota',
+      day: 'numeric',
+      month: 'long',
+      hour: '2-digit',
+      minute: '2-digit',
+      hour12: false,
+    }).format(parseISO(isoString))
   } catch {
     return isoString
   }
 }
 
+// Colombia (America/Bogota) no observa horario de verano: UTC-5 todo el año
+export function colombiaLocalToUTCISOString(localDateTime: string): string {
+  return new Date(`${localDateTime}:00-05:00`).toISOString()
+}
+
 export function isMatchLocked(fechaHora: string): boolean {
-  const lockTime = new Date(fechaHora)
-  lockTime.setHours(lockTime.getHours() - 1)
-  return new Date() >= lockTime
+  const lockTime = new Date(fechaHora).getTime() - 60 * 1000
+  return Date.now() >= lockTime
 }
 
 export function exportToCsv(
