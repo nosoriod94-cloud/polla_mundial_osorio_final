@@ -44,11 +44,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     })
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      async (_event, session) => {
+      (_event, session) => {
         setSession(session)
         setUser(session?.user ?? null)
         if (session?.user) {
-          setIsAdmin(await checkAdmin(session.user.id))
+          // Evitar llamar a supabase dentro del callback de onAuthStateChange:
+          // hacerlo de forma síncrona produce un deadlock interno en supabase-js
+          // (el callback se ejecuta mientras el cliente aún tiene un lock interno
+          // tomado, y checkAdmin necesita ese mismo lock para obtener la sesión).
+          setTimeout(() => {
+            checkAdmin(session.user.id).then(setIsAdmin)
+          }, 0)
         } else {
           setIsAdmin(false)
         }
