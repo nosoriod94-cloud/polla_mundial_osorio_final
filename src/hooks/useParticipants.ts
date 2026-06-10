@@ -22,22 +22,29 @@ export function useParticipantByEmail(email: string | null) {
     enabled: !!email,
     retry: false,
     queryFn: async () => {
-      const fetchPromise = supabase
-        .from('participants')
-        .select('*')
-        .eq('email', email!)
-        .maybeSingle()
+      console.log('[useParticipantByEmail] start', { email, url: import.meta.env.VITE_SUPABASE_URL })
+      try {
+        const fetchPromise = supabase
+          .from('participants')
+          .select('*')
+          .eq('email', email!)
+          .maybeSingle()
 
-      const result = await Promise.race([
-        fetchPromise,
-        new Promise<never>((_, reject) =>
-          setTimeout(() => reject(new Error('timeout')), 8000)
-        ),
-      ])
+        const result = await Promise.race([
+          fetchPromise,
+          new Promise<never>((_, reject) =>
+            setTimeout(() => reject(new Error('timeout')), 8000)
+          ),
+        ])
 
-      const { data, error } = result
-      if (error) throw error
-      return data as Participant | null
+        console.log('[useParticipantByEmail] result', result)
+        const { data, error } = result
+        if (error) throw error
+        return data as Participant | null
+      } catch (e) {
+        console.error('[useParticipantByEmail] error', e)
+        throw e
+      }
     },
   })
 }
