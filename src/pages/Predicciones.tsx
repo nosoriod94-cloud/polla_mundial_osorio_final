@@ -208,6 +208,8 @@ export function Predicciones() {
                           value={pick}
                           onChange={v => handlePick(match.id, v)}
                           disabled={locked}
+                          localLabel={match.equipo_local}
+                          visitanteLabel={match.equipo_visitante}
                         />
                       </div>
                     )

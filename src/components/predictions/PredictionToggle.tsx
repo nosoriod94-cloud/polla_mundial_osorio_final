@@ -5,18 +5,20 @@ interface PredictionToggleProps {
   value: PickType | undefined
   onChange: (v: PickType) => void
   disabled?: boolean
+  localLabel: string
+  visitanteLabel: string
 }
 
-const OPTIONS: { label: string; value: PickType; activeClass: string }[] = [
-  { label: 'Local', value: 'local', activeClass: 'bg-green-600 text-white border-green-600' },
-  { label: 'Empate', value: 'empate', activeClass: 'bg-yellow-500 text-white border-yellow-500' },
-  { label: 'Visitante', value: 'visitante', activeClass: 'bg-blue-600 text-white border-blue-600' },
-]
+export function PredictionToggle({ value, onChange, disabled, localLabel, visitanteLabel }: PredictionToggleProps) {
+  const options: { label: string; value: PickType; activeClass: string }[] = [
+    { label: localLabel, value: 'local', activeClass: 'bg-green-600 text-white border-green-600' },
+    { label: 'Empate', value: 'empate', activeClass: 'bg-yellow-500 text-white border-yellow-500' },
+    { label: visitanteLabel, value: 'visitante', activeClass: 'bg-blue-600 text-white border-blue-600' },
+  ]
 
-export function PredictionToggle({ value, onChange, disabled }: PredictionToggleProps) {
   return (
     <div className="flex rounded-lg overflow-hidden border border-gray-200">
-      {OPTIONS.map((opt) => (
+      {options.map((opt) => (
         <button
           key={opt.value}
           type="button"
