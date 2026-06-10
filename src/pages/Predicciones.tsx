@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
@@ -33,6 +33,15 @@ export function Predicciones() {
   const { register, handleSubmit, formState: { errors } } = useForm({
     resolver: zodResolver(telefonoSchema),
   })
+
+  // Re-renderizar periódicamente para que isMatchLocked se recalcule
+  // y los partidos se bloqueen automáticamente al llegar la hora,
+  // sin necesidad de recargar la página.
+  const [, forceTick] = useState(0)
+  useEffect(() => {
+    const interval = setInterval(() => forceTick(t => t + 1), 15000)
+    return () => clearInterval(interval)
+  }, [])
 
   function onTelefonoSubmit({ telefono }: { telefono: string }) {
     setTelefono(telefono.trim())
