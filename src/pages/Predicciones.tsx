@@ -10,20 +10,20 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Badge } from '@/components/ui/badge'
 import { PredictionToggle } from '@/components/predictions/PredictionToggle'
-import { useParticipantByEmail } from '@/hooks/useParticipants'
+import { useParticipantByPhone } from '@/hooks/useParticipants'
 import { useJornadas } from '@/hooks/useJornadas'
 import { useMatches } from '@/hooks/useMatches'
 import { usePredictionsByParticipant, useUpsertPrediction } from '@/hooks/usePredictions'
 import { formatFechaHora, isMatchLocked } from '@/lib/utils'
 import type { PickType } from '@/lib/types'
 
-const emailSchema = z.object({ email: z.string().email('Correo inválido') })
+const telefonoSchema = z.object({ telefono: z.string().regex(/^\d{10}$/, 'Debe tener 10 dígitos') })
 
 export function Predicciones() {
-  const [email, setEmail] = useState<string | null>(null)
+  const [telefono, setTelefono] = useState<string | null>(null)
   const [expandedJornada, setExpandedJornada] = useState<string | null>(null)
 
-  const participantQuery = useParticipantByEmail(email)
+  const participantQuery = useParticipantByPhone(telefono)
   const { data: participant, isLoading: loadingParticipant, isError: participantError } = participantQuery
   const { data: jornadas } = useJornadas()
   const { data: matches } = useMatches()
@@ -31,11 +31,11 @@ export function Predicciones() {
   const upsert = useUpsertPrediction()
 
   const { register, handleSubmit, formState: { errors } } = useForm({
-    resolver: zodResolver(emailSchema),
+    resolver: zodResolver(telefonoSchema),
   })
 
-  function onEmailSubmit({ email }: { email: string }) {
-    setEmail(email.toLowerCase().trim())
+  function onTelefonoSubmit({ telefono }: { telefono: string }) {
+    setTelefono(telefono.trim())
   }
 
   async function handlePick(matchId: string, prediccion: PickType) {
@@ -47,8 +47,8 @@ export function Predicciones() {
     }
   }
 
-  // Step 1: Email form
-  if (!email) {
+  // Step 1: Phone form
+  if (!telefono) {
     return (
       <div className="min-h-screen bg-gradient-to-b from-blue-50 to-white flex flex-col">
         <header className="p-4">
@@ -60,13 +60,13 @@ export function Predicciones() {
           <div className="w-full max-w-sm space-y-6">
             <div>
               <h1 className="text-2xl font-bold text-gray-900">Mis Predicciones</h1>
-              <p className="text-gray-500 mt-1 text-sm">Ingresa tu correo para continuar</p>
+              <p className="text-gray-500 mt-1 text-sm">Ingresa tu número de teléfono para continuar</p>
             </div>
-            <form onSubmit={handleSubmit(onEmailSubmit)} className="space-y-4">
+            <form onSubmit={handleSubmit(onTelefonoSubmit)} className="space-y-4">
               <div className="space-y-1.5">
-                <Label htmlFor="email">Correo electrónico</Label>
-                <Input id="email" type="email" placeholder="tu@correo.com" {...register('email')} />
-                {errors.email && <p className="text-xs text-red-500">{errors.email.message as string}</p>}
+                <Label htmlFor="telefono">Número de teléfono</Label>
+                <Input id="telefono" type="tel" inputMode="numeric" maxLength={10} placeholder="3001234567" {...register('telefono')} />
+                {errors.telefono && <p className="text-xs text-red-500">{errors.telefono.message as string}</p>}
               </div>
               <Button type="submit" className="w-full">Continuar</Button>
             </form>
@@ -81,9 +81,6 @@ export function Predicciones() {
     return (
       <div className="min-h-screen flex flex-col items-center justify-center gap-2">
         <p className="text-gray-500">Buscando tu perfil...</p>
-        <p className="text-xs text-gray-400 font-mono">
-          email={email} status={participantQuery.status} fetchStatus={participantQuery.fetchStatus}
-        </p>
       </div>
     )
   }
@@ -95,7 +92,7 @@ export function Predicciones() {
         icon={<XCircle className="h-12 w-12 text-red-400" />}
         title="Error al buscar tu perfil"
         message="No se pudo conectar con el servidor. Verifica tu conexión e intenta de nuevo."
-        onBack={() => setEmail(null)}
+        onBack={() => setTelefono(null)}
       />
     )
   }
@@ -105,10 +102,10 @@ export function Predicciones() {
     return (
       <StatusScreen
         icon={<XCircle className="h-12 w-12 text-red-400" />}
-        title="Correo no encontrado"
-        message="No encontramos tu correo en la polla. ¿Ya te inscribiste?"
+        title="Teléfono no encontrado"
+        message="No encontramos tu número en la polla. ¿Ya te inscribiste?"
         action={<Link to="/registro"><Button className="w-full">Inscribirme</Button></Link>}
-        onBack={() => setEmail(null)}
+        onBack={() => setTelefono(null)}
       />
     )
   }
@@ -119,7 +116,7 @@ export function Predicciones() {
         icon={<div className="text-4xl">⏳</div>}
         title="Inscripción pendiente"
         message="Los administradores aún no han aprobado tu inscripción. Espera un momento."
-        onBack={() => setEmail(null)}
+        onBack={() => setTelefono(null)}
       />
     )
   }
@@ -130,7 +127,7 @@ export function Predicciones() {
         icon={<XCircle className="h-12 w-12 text-red-400" />}
         title="Inscripción no aprobada"
         message="Tu inscripción no fue aprobada. Contacta a los administradores."
-        onBack={() => setEmail(null)}
+        onBack={() => setTelefono(null)}
       />
     )
   }
@@ -140,7 +137,7 @@ export function Predicciones() {
     <div className="min-h-screen bg-gray-50">
       <header className="bg-white border-b border-gray-200 p-4 sticky top-0 z-10">
         <div className="flex items-center justify-between max-w-lg mx-auto">
-          <button onClick={() => setEmail(null)} className="text-gray-600 hover:text-gray-900">
+          <button onClick={() => setTelefono(null)} className="text-gray-600 hover:text-gray-900">
             <ArrowLeft className="h-5 w-5" />
           </button>
           <div className="text-center">
@@ -244,7 +241,7 @@ function StatusScreen({
     <div className="min-h-screen bg-gradient-to-b from-blue-50 to-white flex flex-col">
       <header className="p-4">
         <button onClick={onBack} className="inline-flex items-center gap-2 text-gray-600">
-          <ArrowLeft className="h-4 w-4" /> Cambiar correo
+          <ArrowLeft className="h-4 w-4" /> Cambiar teléfono
         </button>
       </header>
       <main className="flex-1 flex items-center justify-center px-4">

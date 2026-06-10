@@ -25,7 +25,7 @@ export function useAllPredictions() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from('predictions')
-        .select('*, participants(nombre, email), matches(equipo_local, equipo_visitante, fecha_hora, jornadas(nombre, orden))')
+        .select('*, participants(nombre, telefono), matches(equipo_local, equipo_visitante, fecha_hora, jornadas(nombre, orden))')
         .order('submitted_at', { ascending: true })
       if (error) throw error
       return data

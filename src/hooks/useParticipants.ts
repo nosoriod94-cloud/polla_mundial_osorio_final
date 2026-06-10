@@ -16,16 +16,16 @@ export function useParticipants() {
   })
 }
 
-export function useParticipantByEmail(email: string | null) {
+export function useParticipantByPhone(telefono: string | null) {
   return useQuery({
-    queryKey: ['participant', email],
-    enabled: !!email,
+    queryKey: ['participant', telefono],
+    enabled: !!telefono,
     retry: false,
     queryFn: async () => {
       const { data, error } = await supabase
         .from('participants')
         .select('*')
-        .eq('email', email!)
+        .eq('telefono', telefono!)
         .maybeSingle()
       if (error) throw error
       return data as Participant | null
@@ -36,10 +36,10 @@ export function useParticipantByEmail(email: string | null) {
 export function useRegisterParticipant() {
   const qc = useQueryClient()
   return useMutation({
-    mutationFn: async ({ nombre, email }: { nombre: string; email: string }) => {
+    mutationFn: async ({ nombre, telefono }: { nombre: string; telefono: string }) => {
       const { data, error } = await supabase
         .from('participants')
-        .insert({ nombre, email })
+        .insert({ nombre, telefono })
         .select()
         .single()
       if (error) throw error

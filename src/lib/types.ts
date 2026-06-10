@@ -4,7 +4,7 @@ export type PickType = 'local' | 'empate' | 'visitante'
 export interface Participant {
   id: string
   nombre: string
-  email: string
+  telefono: string
   status: ParticipantStatus
   registered_at: string
   approved_at: string | null
@@ -38,7 +38,7 @@ export interface Prediction {
 export interface Standing {
   participant_id: string
   nombre: string
-  email: string
+  telefono: string
   puntos_totales: number
   aciertos: number
   total_predicciones: number

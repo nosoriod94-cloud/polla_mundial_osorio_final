@@ -28,7 +28,7 @@ export function PrediccionesTab() {
       Local: (p.matches as any)?.equipo_local ?? '',
       Visitante: (p.matches as any)?.equipo_visitante ?? '',
       'Nombre Usuario': (p.participants as any)?.nombre ?? '',
-      'Correo Usuario': (p.participants as any)?.email ?? '',
+      'Teléfono Usuario': (p.participants as any)?.telefono ?? '',
       Prediccion: PICK_LABELS[p.prediccion] ?? p.prediccion,
       timestamp: p.submitted_at,
     }))
@@ -90,7 +90,7 @@ export function PrediccionesTab() {
                   </td>
                   <td className="p-3">
                     <p className="font-medium text-gray-900">{(p.participants as any)?.nombre}</p>
-                    <p className="text-xs text-gray-400">{(p.participants as any)?.email}</p>
+                    <p className="text-xs text-gray-400">{(p.participants as any)?.telefono}</p>
                   </td>
                   <td className="p-3">
                     <Badge variant={p.prediccion === 'local' ? 'success' : p.prediccion === 'empate' ? 'warning' : 'info'}>

@@ -7,11 +7,11 @@ import { ArrowLeft, CheckCircle2 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
-import { useRegisterParticipant, useParticipantByEmail } from '@/hooks/useParticipants'
+import { useRegisterParticipant, useParticipantByPhone } from '@/hooks/useParticipants'
 
 const schema = z.object({
   nombre: z.string().min(2, 'Nombre muy corto').max(80),
-  email: z.string().email('Correo inválido'),
+  telefono: z.string().regex(/^\d{10}$/, 'Debe tener 10 dígitos'),
 })
 type FormData = z.infer<typeof schema>
 
@@ -23,24 +23,23 @@ const STATUS_MESSAGES = {
 
 export function Registro() {
   const [done, setDone] = useState(false)
-  const [checkEmail, setCheckEmail] = useState<string | null>(null)
+  const [checkTelefono, setCheckTelefono] = useState<string | null>(null)
   const register_ = useRegisterParticipant()
-  const { data: existing } = useParticipantByEmail(checkEmail)
+  const { data: existing } = useParticipantByPhone(checkTelefono)
 
   const { register, handleSubmit, getValues, formState: { errors } } = useForm<FormData>({
     resolver: zodResolver(schema),
   })
 
   async function onSubmit(data: FormData) {
-    setCheckEmail(data.email)
-    // Small delay to let the query run
+    setCheckTelefono(data.telefono)
     try {
       await register_.mutateAsync(data)
       setDone(true)
     } catch (err: any) {
       if (err?.code === '23505') {
-        // Email ya existe — mostrar su estado
-        setCheckEmail(data.email)
+        // Teléfono ya existe — mostrar su estado
+        setCheckTelefono(data.telefono)
       }
     }
   }
@@ -64,7 +63,7 @@ export function Registro() {
     )
   }
 
-  if (checkEmail && existing && register_.isError) {
+  if (checkTelefono && existing && register_.isError) {
     return (
       <div className="min-h-screen bg-gradient-to-b from-green-50 to-white flex flex-col items-center justify-center px-4">
         <div className="max-w-sm w-full text-center space-y-6">
@@ -106,9 +105,9 @@ export function Registro() {
             </div>
 
             <div className="space-y-1.5">
-              <Label htmlFor="email">Correo electrónico</Label>
-              <Input id="email" type="email" placeholder="tu@correo.com" {...register('email')} />
-              {errors.email && <p className="text-xs text-red-500">{errors.email.message}</p>}
+              <Label htmlFor="telefono">Número de teléfono</Label>
+              <Input id="telefono" type="tel" inputMode="numeric" maxLength={10} placeholder="3001234567" {...register('telefono')} />
+              {errors.telefono && <p className="text-xs text-red-500">{errors.telefono.message}</p>}
             </div>
 
             <Button type="submit" className="w-full" disabled={register_.isPending}>

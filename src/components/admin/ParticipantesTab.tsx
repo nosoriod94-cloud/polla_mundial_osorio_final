@@ -78,7 +78,7 @@ export function ParticipantesTab() {
             <div key={p.id} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg border border-gray-200">
               <div className="min-w-0">
                 <p className="font-medium text-gray-900 truncate">{p.nombre}</p>
-                <p className="text-sm text-gray-500 truncate">{p.email}</p>
+                <p className="text-sm text-gray-500 truncate">{p.telefono}</p>
                 <p className="text-xs text-gray-400 flex items-center gap-1 mt-0.5">
                   <Clock className="h-3 w-3" />
                   {formatFechaHora(p.registered_at)}
