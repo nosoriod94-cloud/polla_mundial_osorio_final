@@ -84,11 +84,6 @@ export function Predicciones() {
         <p className="text-xs text-gray-400 font-mono">
           email={email} status={participantQuery.status} fetchStatus={participantQuery.fetchStatus}
         </p>
-        {participantQuery.error && (
-          <p className="text-xs text-red-500 font-mono max-w-sm text-center break-words">
-            {String(participantQuery.error)}
-          </p>
-        )}
       </div>
     )
   }
