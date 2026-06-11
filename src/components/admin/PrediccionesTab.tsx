@@ -22,8 +22,19 @@ export function PrediccionesTab() {
     return String((p.matches as any)?.jornadas?.nombre) === filterJornada
   })
 
-  function handleExport() {
-    const rows = (predictions ?? []).map(p => ({
+  // Agrupar las predicciones filtradas por partido, ordenadas por fecha_hora
+  type Group = { match: any; matchId: string; predicciones: typeof filtered }
+  const groupsByMatch = filtered.reduce((acc, p) => {
+    const matchId = p.match_id as string
+    if (!acc[matchId]) acc[matchId] = { match: p.matches as any, matchId, predicciones: [] }
+    acc[matchId].predicciones.push(p)
+    return acc
+  }, {} as Record<string, Group>)
+  const groups = (Object.values(groupsByMatch) as Group[])
+    .sort((a, b) => new Date(a.match?.fecha_hora ?? 0).getTime() - new Date(b.match?.fecha_hora ?? 0).getTime())
+
+  function buildRows(preds: typeof filtered) {
+    return preds.map(p => ({
       Jornada: (p.matches as any)?.jornadas?.nombre ?? '',
       Local: (p.matches as any)?.equipo_local ?? '',
       Visitante: (p.matches as any)?.equipo_visitante ?? '',
@@ -32,7 +43,24 @@ export function PrediccionesTab() {
       Prediccion: PICK_LABELS[p.prediccion] ?? p.prediccion,
       timestamp: p.submitted_at,
     }))
-    exportToCsv(rows, 'predicciones_mundial_2026.csv')
+  }
+
+  function slugify(text: string) {
+    return text
+      .normalize('NFD').replace(/[̀-ͯ]/g, '')
+      .toLowerCase()
+      .replace(/[^a-z0-9]+/g, '_')
+      .replace(/^_+|_+$/g, '')
+  }
+
+  function handleExport() {
+    exportToCsv(buildRows(filtered), 'predicciones_mundial_2026.csv')
+  }
+
+  function handleExportMatch(match: any, preds: typeof filtered) {
+    const fecha = match?.fecha_hora ? match.fecha_hora.slice(0, 10) : ''
+    const filename = `predicciones_${slugify(match?.equipo_local ?? '')}_vs_${slugify(match?.equipo_visitante ?? '')}_${fecha}.csv`
+    exportToCsv(buildRows(preds), filename)
   }
 
   return (
@@ -68,40 +96,52 @@ export function PrediccionesTab() {
       ) : filtered.length === 0 ? (
         <div className="text-center py-8 text-gray-400">No hay predicciones</div>
       ) : (
-        <div className="overflow-x-auto rounded-lg border border-gray-200">
-          <table className="w-full text-sm">
-            <thead className="bg-gray-50">
-              <tr>
-                <th className="text-left p-3 text-xs font-medium text-gray-500 uppercase">Jornada</th>
-                <th className="text-left p-3 text-xs font-medium text-gray-500 uppercase">Partido</th>
-                <th className="text-left p-3 text-xs font-medium text-gray-500 uppercase">Participante</th>
-                <th className="text-left p-3 text-xs font-medium text-gray-500 uppercase">Predicción</th>
-                <th className="text-left p-3 text-xs font-medium text-gray-500 uppercase">Enviado</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-gray-100">
-              {filtered.map(p => (
-                <tr key={p.id} className="hover:bg-gray-50">
-                  <td className="p-3 text-gray-600">{(p.matches as any)?.jornadas?.nombre ?? '-'}</td>
-                  <td className="p-3">
-                    <span className="font-medium">{(p.matches as any)?.equipo_local}</span>
-                    <span className="text-gray-400 mx-1">vs</span>
-                    <span className="font-medium">{(p.matches as any)?.equipo_visitante}</span>
-                  </td>
-                  <td className="p-3">
-                    <p className="font-medium text-gray-900">{(p.participants as any)?.nombre}</p>
-                    <p className="text-xs text-gray-400">{(p.participants as any)?.telefono}</p>
-                  </td>
-                  <td className="p-3">
-                    <Badge variant={p.prediccion === 'local' ? 'success' : p.prediccion === 'empate' ? 'warning' : 'info'}>
-                      {PICK_LABELS[p.prediccion]}
-                    </Badge>
-                  </td>
-                  <td className="p-3 text-gray-400 text-xs">{formatFechaHora(p.submitted_at)}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
+        <div className="space-y-4">
+          {groups.map(({ match, matchId, predicciones }) => (
+            <div key={matchId} className="rounded-lg border border-gray-200 overflow-hidden">
+              <div className="flex items-center justify-between gap-2 p-3 bg-gray-50 flex-wrap">
+                <div>
+                  <p className="font-medium text-gray-900">
+                    {match?.equipo_local} <span className="text-gray-400 font-normal">vs</span> {match?.equipo_visitante}
+                  </p>
+                  <p className="text-xs text-gray-500">
+                    {match?.jornadas?.nombre ?? '-'} · {match?.fecha_hora ? formatFechaHora(match.fecha_hora) : '-'}
+                  </p>
+                </div>
+                <Button size="sm" variant="outline" onClick={() => handleExportMatch(match, predicciones)}>
+                  <Download className="h-4 w-4" />
+                  Descargar CSV
+                </Button>
+              </div>
+              <div className="overflow-x-auto">
+                <table className="w-full text-sm">
+                  <thead className="bg-gray-50">
+                    <tr>
+                      <th className="text-left p-3 text-xs font-medium text-gray-500 uppercase">Participante</th>
+                      <th className="text-left p-3 text-xs font-medium text-gray-500 uppercase">Predicción</th>
+                      <th className="text-left p-3 text-xs font-medium text-gray-500 uppercase">Enviado</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-gray-100">
+                    {predicciones.map(p => (
+                      <tr key={p.id} className="hover:bg-gray-50">
+                        <td className="p-3">
+                          <p className="font-medium text-gray-900">{(p.participants as any)?.nombre}</p>
+                          <p className="text-xs text-gray-400">{(p.participants as any)?.telefono}</p>
+                        </td>
+                        <td className="p-3">
+                          <Badge variant={p.prediccion === 'local' ? 'success' : p.prediccion === 'empate' ? 'warning' : 'info'}>
+                            {PICK_LABELS[p.prediccion]}
+                          </Badge>
+                        </td>
+                        <td className="p-3 text-gray-400 text-xs">{formatFechaHora(p.submitted_at)}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          ))}
         </div>
       )}
     </div>
