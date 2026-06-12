@@ -10,32 +10,15 @@ const PODIUM_COLORS = [
   'bg-orange-50 border-orange-300',
 ]
 
-function AccuracyBar({ value }: { value: number }) {
-  return (
-    <div className="h-1.5 w-full bg-gray-100 rounded-full overflow-hidden">
-      <div
-        className="h-full bg-green-500 rounded-full"
-        style={{ width: `${Math.min(value, 100)}%` }}
-      />
-    </div>
-  )
-}
-
 function PodiumCard({ standing, rank }: { standing: Standing; rank: number }) {
-  const accuracy = standing.total_predicciones > 0
-    ? Math.round((standing.aciertos / standing.total_predicciones) * 100)
-    : 0
-
   return (
     <div className={`rounded-2xl border-2 p-4 ${PODIUM_COLORS[rank]} text-center`}>
       <p className="text-2xl">{MEDALS[rank]}</p>
       <p className="font-bold text-gray-900 mt-1 text-sm leading-tight">{standing.nombre}</p>
       <p className="text-2xl font-bold text-gray-900 mt-2">{standing.puntos_totales}</p>
       <p className="text-xs text-gray-500">puntos</p>
-      <div className="mt-2 space-y-1">
-        <p className="text-xs text-gray-600">{standing.aciertos}/{standing.total_predicciones} aciertos</p>
-        <AccuracyBar value={accuracy} />
-        <p className="text-xs text-gray-400">{accuracy}% precisión</p>
+      <div className="mt-2">
+        <p className="text-xs text-gray-600">{standing.aciertos} aciertos</p>
       </div>
     </div>
   )
@@ -86,9 +69,6 @@ export function Posiciones() {
                 <div className="divide-y divide-gray-50">
                   {rest.map((s, i) => {
                     const rank = i + 4
-                    const accuracy = s.total_predicciones > 0
-                      ? Math.round((s.aciertos / s.total_predicciones) * 100)
-                      : 0
                     return (
                       <div key={s.participant_id} className="flex items-center p-3 gap-3">
                         <div className="w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center text-sm font-bold text-gray-600 flex-shrink-0">
@@ -96,14 +76,10 @@ export function Posiciones() {
                         </div>
                         <div className="flex-1 min-w-0">
                           <p className="font-medium text-gray-900 truncate">{s.nombre}</p>
-                          <div className="flex items-center gap-2 mt-0.5">
-                            <AccuracyBar value={accuracy} />
-                            <span className="text-xs text-gray-400 flex-shrink-0">{accuracy}%</span>
-                          </div>
                         </div>
                         <div className="text-right flex-shrink-0">
                           <p className="font-bold text-gray-900">{s.puntos_totales}</p>
-                          <p className="text-xs text-gray-400">{s.aciertos} ac.</p>
+                          <p className="text-xs text-gray-400">{s.aciertos} aciertos</p>
                         </div>
                       </div>
                     )
