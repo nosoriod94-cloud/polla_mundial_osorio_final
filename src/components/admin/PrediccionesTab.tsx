@@ -11,10 +11,11 @@ export function PrediccionesTab() {
   const { data: jornadas } = useJornadas()
   const [filterJornada, setFilterJornada] = useState<string>('all')
 
-  const PICK_LABELS: Record<string, string> = {
-    local: 'Local',
-    empate: 'Empate',
-    visitante: 'Visitante',
+  function pickLabel(prediccion: string, match: any): string {
+    if (prediccion === 'empate') return 'Empate'
+    if (prediccion === 'local') return match?.equipo_local ?? 'Local'
+    if (prediccion === 'visitante') return match?.equipo_visitante ?? 'Visitante'
+    return prediccion
   }
 
   const filtered = (predictions ?? []).filter(p => {
@@ -40,7 +41,7 @@ export function PrediccionesTab() {
       Visitante: (p.matches as any)?.equipo_visitante ?? '',
       'Nombre Usuario': (p.participants as any)?.nombre ?? '',
       'Teléfono Usuario': (p.participants as any)?.telefono ?? '',
-      Prediccion: PICK_LABELS[p.prediccion] ?? p.prediccion,
+      Prediccion: pickLabel(p.prediccion, p.matches as any),
       timestamp: p.submitted_at,
     }))
   }
@@ -131,7 +132,7 @@ export function PrediccionesTab() {
                         </td>
                         <td className="p-3">
                           <Badge variant={p.prediccion === 'local' ? 'success' : p.prediccion === 'empate' ? 'warning' : 'info'}>
-                            {PICK_LABELS[p.prediccion]}
+                            {pickLabel(p.prediccion, p.matches as any)}
                           </Badge>
                         </td>
                         <td className="p-3 text-gray-400 text-xs">{formatFechaHora(p.submitted_at)}</td>
