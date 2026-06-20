@@ -12,28 +12,28 @@ Cada participante predice el resultado (victoria local, empate o victoria visita
 
 | Fase | Partidos | Puntos por acierto | Máximo disponible |
 |---|---|---|---|
-| Fase de grupos | 96 | 3 | 288 |
+| Fase de grupos | 72 | 3 | 216 |
 | 16avos de final | 16 | 5 | 80 |
-| 8avos de final | 8 | 7 | 56 |
-| Cuartos de final | 4 | 10 | 40 |
-| Semifinales | 2 | 15 | 30 |
-| Tercer puesto | 1 | 10 | 10 |
-| Final | 1 | 25 | 25 |
-| **Total** | **128** | — | **529** |
+| 8avos de final | 8 | 8 | 64 |
+| Cuartos de final | 4 | 12 | 48 |
+| Semifinales | 2 | 18 | 36 |
+| Tercer puesto | 1 | 12 | 12 |
+| Final | 1 | 30 | 30 |
+| **Total** | **104** | — | **486** |
 
 ---
 
 ## Distribución del puntaje
 
-- **Fase de grupos:** 288 pts disponibles (54% del total)
-- **Fases eliminatorias:** 241 pts disponibles (46% del total)
+- **Fase de grupos:** 216 pts disponibles (44% del total)
+- **Fases eliminatorias:** 270 pts disponibles (56% del total)
 
-La fase de grupos concentra más de la mitad del puntaje máximo, lo que premia la consistencia a lo largo del torneo y da peso real al desempate por número de aciertos.
+Las eliminatorias pesan más que la fase de grupos, reflejando que acertar un resultado se vuelve más difícil a medida que avanza el torneo: los equipos son más parejos en nivel, hay menos margen de error, y factores como penales, tiempo extra y bajas por suspensión aumentan la incertidumbre.
 
 ---
 
 ## Notas de diseño
 
-- El partido por el **tercer puesto** vale menos que las semifinales (10 vs. 15 pts) dado que es el partido de menor relevancia competitiva del torneo y el más difícil de predecir.
-- La **final** (25 pts) equivale a ~8 predicciones correctas en grupos — suficiente para generar emoción en la última jornada, pero no tanto como para voltear completamente una ventaja construida con consistencia.
-- El crecimiento de puntos entre fases es sub-exponencial, lo que mantiene alineado el incentivo de acertar con el mecanismo de desempate.
+- El **partido por el tercer puesto** vale menos que las semifinales (12 vs. 18 pts), ya que su resultado suele ser más impredecible por rotación de jugadores y baja motivación, pero conserva un valor cercano a 8avos por la dificultad inherente de cualquier eliminatorio.
+- La **final** (30 pts) equivale a 10 predicciones correctas en grupos — el mayor salto de todo el esquema, reflejando que es el partido más difícil de predecir y el de mayor expectativa del torneo.
+- El crecimiento entre fases es más pronunciado que en un esquema lineal, premiando la dificultad creciente de acertar conforme el nivel de los equipos se equipara en las rondas eliminatorias.
