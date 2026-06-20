@@ -1,15 +1,20 @@
 import { useState } from 'react'
 import { Download } from 'lucide-react'
+import { toast } from 'sonner'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
-import { useAllPredictions } from '@/hooks/usePredictions'
+import { useAllPredictions, useUpsertPrediction } from '@/hooks/usePredictions'
 import { useJornadas } from '@/hooks/useJornadas'
+import { useParticipants } from '@/hooks/useParticipants'
 import { exportToCsv, formatFechaHora } from '@/lib/utils'
+import type { Participant, PickType } from '@/lib/types'
 
 export function PrediccionesTab() {
   const { data: predictions, isLoading } = useAllPredictions()
   const { data: jornadas } = useJornadas()
+  const { data: participants } = useParticipants()
   const [filterJornada, setFilterJornada] = useState<string>('all')
+  const approved = (participants ?? []).filter(p => p.status === 'approved')
 
   function pickLabel(prediccion: string, match: any): string {
     if (prediccion === 'empate') return 'Empate'
@@ -98,53 +103,132 @@ export function PrediccionesTab() {
         <div className="text-center py-8 text-gray-400">No hay predicciones</div>
       ) : (
         <div className="space-y-4">
-          {groups.map(({ match, matchId, predicciones }) => (
-            <div key={matchId} className="rounded-lg border border-gray-200 overflow-hidden">
-              <div className="flex items-center justify-between gap-2 p-3 bg-gray-50 flex-wrap">
-                <div>
-                  <p className="font-medium text-gray-900">
-                    {match?.equipo_local} <span className="text-gray-400 font-normal">vs</span> {match?.equipo_visitante}
-                  </p>
-                  <p className="text-xs text-gray-500">
-                    {match?.jornadas?.nombre ?? '-'} · {match?.fecha_hora ? formatFechaHora(match.fecha_hora) : '-'}
-                  </p>
+          {groups.map(({ match, matchId, predicciones }) => {
+            const pendientes = approved.filter(
+              p => !predicciones.some(pred => pred.participant_id === p.id)
+            )
+            return (
+              <div key={matchId} className="rounded-lg border border-gray-200 overflow-hidden">
+                <div className="flex items-center justify-between gap-2 p-3 bg-gray-50 flex-wrap">
+                  <div>
+                    <p className="font-medium text-gray-900">
+                      {match?.equipo_local} <span className="text-gray-400 font-normal">vs</span> {match?.equipo_visitante}
+                    </p>
+                    <p className="text-xs text-gray-500">
+                      {match?.jornadas?.nombre ?? '-'} · {match?.fecha_hora ? formatFechaHora(match.fecha_hora) : '-'}
+                    </p>
+                  </div>
+                  <Button size="sm" variant="outline" onClick={() => handleExportMatch(match, predicciones)}>
+                    <Download className="h-4 w-4" />
+                    Descargar CSV
+                  </Button>
                 </div>
-                <Button size="sm" variant="outline" onClick={() => handleExportMatch(match, predicciones)}>
-                  <Download className="h-4 w-4" />
-                  Descargar CSV
-                </Button>
-              </div>
-              <div className="overflow-x-auto">
-                <table className="w-full text-sm">
-                  <thead className="bg-gray-50">
-                    <tr>
-                      <th className="text-left p-3 text-xs font-medium text-gray-500 uppercase">Participante</th>
-                      <th className="text-left p-3 text-xs font-medium text-gray-500 uppercase">Predicción</th>
-                      <th className="text-left p-3 text-xs font-medium text-gray-500 uppercase">Enviado</th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-gray-100">
-                    {predicciones.map(p => (
-                      <tr key={p.id} className="hover:bg-gray-50">
-                        <td className="p-3">
-                          <p className="font-medium text-gray-900">{(p.participants as any)?.nombre}</p>
-                          <p className="text-xs text-gray-400">{(p.participants as any)?.telefono}</p>
-                        </td>
-                        <td className="p-3">
-                          <Badge variant={p.prediccion === 'local' ? 'success' : p.prediccion === 'empate' ? 'warning' : 'info'}>
-                            {pickLabel(p.prediccion, p.matches as any)}
-                          </Badge>
-                        </td>
-                        <td className="p-3 text-gray-400 text-xs">{formatFechaHora(p.submitted_at)}</td>
+                <div className="overflow-x-auto">
+                  <table className="w-full text-sm">
+                    <thead className="bg-gray-50">
+                      <tr>
+                        <th className="text-left p-3 text-xs font-medium text-gray-500 uppercase">Participante</th>
+                        <th className="text-left p-3 text-xs font-medium text-gray-500 uppercase">Predicción</th>
+                        <th className="text-left p-3 text-xs font-medium text-gray-500 uppercase">Enviado</th>
                       </tr>
-                    ))}
-                  </tbody>
-                </table>
+                    </thead>
+                    <tbody className="divide-y divide-gray-100">
+                      {predicciones.map(p => (
+                        <tr key={p.id} className="hover:bg-gray-50">
+                          <td className="p-3">
+                            <p className="font-medium text-gray-900">{(p.participants as any)?.nombre}</p>
+                            <p className="text-xs text-gray-400">{(p.participants as any)?.telefono}</p>
+                          </td>
+                          <td className="p-3">
+                            <Badge variant={p.prediccion === 'local' ? 'success' : p.prediccion === 'empate' ? 'warning' : 'info'}>
+                              {pickLabel(p.prediccion, p.matches as any)}
+                            </Badge>
+                          </td>
+                          <td className="p-3 text-gray-400 text-xs">{formatFechaHora(p.submitted_at)}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+                <AdminPredictionForm match={match} matchId={matchId} pendientes={pendientes} />
               </div>
-            </div>
-          ))}
+            )
+          })}
         </div>
       )}
+    </div>
+  )
+}
+
+function AdminPredictionForm({
+  match,
+  matchId,
+  pendientes,
+}: {
+  match: any
+  matchId: string
+  pendientes: Participant[]
+}) {
+  const [participantId, setParticipantId] = useState('')
+  const [prediccion, setPrediccion] = useState<PickType | ''>('')
+  const upsert = useUpsertPrediction()
+
+  if (pendientes.length === 0) {
+    return (
+      <p className="px-3 py-2 text-xs text-gray-400 border-t border-gray-100">
+        Todos los participantes aprobados ya predijeron este partido
+      </p>
+    )
+  }
+
+  const picks: { value: PickType; label: string }[] = [
+    { value: 'local', label: match?.equipo_local ?? 'Local' },
+    { value: 'empate', label: 'Empate' },
+    { value: 'visitante', label: match?.equipo_visitante ?? 'Visitante' },
+  ]
+
+  async function handleSave() {
+    if (!participantId || !prediccion) return
+    try {
+      await upsert.mutateAsync({ participantId, matchId, prediccion })
+      toast.success('Predicción guardada')
+      setParticipantId('')
+      setPrediccion('')
+    } catch {
+      toast.error('Error al guardar la predicción')
+    }
+  }
+
+  return (
+    <div className="flex items-center gap-2 p-3 border-t border-gray-100 flex-wrap bg-white">
+      <select
+        value={participantId}
+        onChange={e => setParticipantId(e.target.value)}
+        className="text-sm border border-gray-200 rounded-md px-2 py-1.5 text-gray-700 min-w-[200px]"
+      >
+        <option value="">Agregar predicción para...</option>
+        {pendientes.map(p => (
+          <option key={p.id} value={p.id}>
+            {p.nombre} — {p.telefono}
+          </option>
+        ))}
+      </select>
+      <div className="flex gap-1">
+        {picks.map(pick => (
+          <button
+            key={pick.value}
+            onClick={() => setPrediccion(pick.value)}
+            className={`px-2.5 py-1.5 rounded-md text-xs font-medium transition-colors ${
+              prediccion === pick.value ? 'bg-green-600 text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+            }`}
+          >
+            {pick.label}
+          </button>
+        ))}
+      </div>
+      <Button size="sm" onClick={handleSave} disabled={!participantId || !prediccion || upsert.isPending}>
+        Guardar predicción
+      </Button>
     </div>
   )
 }

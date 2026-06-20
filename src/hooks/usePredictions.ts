@@ -53,8 +53,8 @@ export function useUpsertPrediction() {
         )
       if (error) throw error
     },
-    onSuccess: (_data, variables) => {
-      qc.invalidateQueries({ queryKey: ['predictions', variables.participantId] })
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['predictions'] })
     },
   })
 }
