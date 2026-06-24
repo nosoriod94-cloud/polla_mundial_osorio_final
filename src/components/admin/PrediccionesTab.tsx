@@ -6,6 +6,7 @@ import { Badge } from '@/components/ui/badge'
 import { useAllPredictions, useUpsertPrediction } from '@/hooks/usePredictions'
 import { useJornadas } from '@/hooks/useJornadas'
 import { useParticipants } from '@/hooks/useParticipants'
+import { useMatches } from '@/hooks/useMatches'
 import { exportToCsv, formatFechaHora } from '@/lib/utils'
 import type { Participant, PickType } from '@/lib/types'
 
@@ -20,8 +21,16 @@ export function PrediccionesTab() {
   const { data: predictions, isLoading } = useAllPredictions()
   const { data: jornadas } = useJornadas()
   const { data: participants } = useParticipants()
+  const { data: matches } = useMatches()
   const [filterJornada, setFilterJornada] = useState<string>('all')
   const approved = (participants ?? []).filter(p => p.status === 'approved')
+
+  // Numeración cronológica global de partidos (1, 2, 3...), para que el
+  // mismo partido tenga siempre el mismo "Partido N" en cualquier CSV.
+  const matchNumberById = (matches ?? []).reduce((acc, m, i) => {
+    acc[m.id] = i + 1
+    return acc
+  }, {} as Record<string, number>)
 
   const filtered = (predictions ?? []).filter(p => {
     if (filterJornada === 'all') return true
@@ -41,6 +50,7 @@ export function PrediccionesTab() {
 
   function buildRows(preds: typeof filtered) {
     return preds.map(p => ({
+      Partido: matchNumberById[p.match_id] ? `Partido${matchNumberById[p.match_id]}` : '',
       Jornada: (p.matches as any)?.jornadas?.nombre ?? '',
       Local: (p.matches as any)?.equipo_local ?? '',
       Visitante: (p.matches as any)?.equipo_visitante ?? '',
