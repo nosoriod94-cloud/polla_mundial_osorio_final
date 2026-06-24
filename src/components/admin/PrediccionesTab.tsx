@@ -59,13 +59,25 @@ export function PrediccionesTab() {
       .replace(/^_+|_+$/g, '')
   }
 
+  function diaMesSlug(fechaHora: string): string {
+    const parts = new Intl.DateTimeFormat('es-CO', {
+      timeZone: 'America/Bogota',
+      day: 'numeric',
+      month: 'long',
+    }).formatToParts(new Date(fechaHora))
+    const day = parts.find(p => p.type === 'day')?.value ?? ''
+    const month = parts.find(p => p.type === 'month')?.value ?? ''
+    return `${month}${day}`
+  }
+
   function handleExport() {
     exportToCsv(buildRows(filtered), 'predicciones_mundial_2026.csv')
   }
 
   function handleExportMatch(match: any, preds: typeof filtered) {
-    const fecha = match?.fecha_hora ? match.fecha_hora.slice(0, 10) : ''
-    const filename = `predicciones_${slugify(match?.equipo_local ?? '')}_vs_${slugify(match?.equipo_visitante ?? '')}_${fecha}.csv`
+    const dia = match?.jornadas?.orden ? `dia${match.jornadas.orden}_` : ''
+    const mes = match?.fecha_hora ? diaMesSlug(match.fecha_hora) : ''
+    const filename = `predicciones_${dia}${mes}_${slugify(match?.equipo_local ?? '')}_vs_${slugify(match?.equipo_visitante ?? '')}.csv`
     exportToCsv(buildRows(preds), filename)
   }
 

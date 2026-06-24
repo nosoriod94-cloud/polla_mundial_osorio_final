@@ -31,6 +31,10 @@ export function isMatchLocked(fechaHora: string): boolean {
   return Date.now() >= lockTime
 }
 
+function csvCell(value: string): string {
+  return `"${value.replace(/"/g, '""')}"`
+}
+
 export function exportToCsv(
   rows: Record<string, string | number>[],
   filename: string
@@ -40,10 +44,10 @@ export function exportToCsv(
   const csvContent = [
     headers.join(','),
     ...rows.map(row =>
-      headers.map(h => JSON.stringify(String(row[h] ?? ''))).join(',')
+      headers.map(h => csvCell(String(row[h] ?? ''))).join(',')
     ),
   ].join('\n')
-  const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' })
+  const blob = new Blob(['﻿', csvContent], { type: 'text/csv;charset=utf-8;' })
   const url = URL.createObjectURL(blob)
   const link = document.createElement('a')
   link.href = url
