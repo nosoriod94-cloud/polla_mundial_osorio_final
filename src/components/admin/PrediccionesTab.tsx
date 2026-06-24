@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { Download } from 'lucide-react'
+import { Download, Pencil, Check, X } from 'lucide-react'
 import { toast } from 'sonner'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
@@ -9,19 +9,19 @@ import { useParticipants } from '@/hooks/useParticipants'
 import { exportToCsv, formatFechaHora } from '@/lib/utils'
 import type { Participant, PickType } from '@/lib/types'
 
+function pickLabel(prediccion: string, match: any): string {
+  if (prediccion === 'empate') return 'Empate'
+  if (prediccion === 'local') return match?.equipo_local ?? 'Local'
+  if (prediccion === 'visitante') return match?.equipo_visitante ?? 'Visitante'
+  return prediccion
+}
+
 export function PrediccionesTab() {
   const { data: predictions, isLoading } = useAllPredictions()
   const { data: jornadas } = useJornadas()
   const { data: participants } = useParticipants()
   const [filterJornada, setFilterJornada] = useState<string>('all')
   const approved = (participants ?? []).filter(p => p.status === 'approved')
-
-  function pickLabel(prediccion: string, match: any): string {
-    if (prediccion === 'empate') return 'Empate'
-    if (prediccion === 'local') return match?.equipo_local ?? 'Local'
-    if (prediccion === 'visitante') return match?.equipo_visitante ?? 'Visitante'
-    return prediccion
-  }
 
   const filtered = (predictions ?? []).filter(p => {
     if (filterJornada === 'all') return true
@@ -140,9 +140,7 @@ export function PrediccionesTab() {
                             <p className="text-xs text-gray-400">{(p.participants as any)?.telefono}</p>
                           </td>
                           <td className="p-3">
-                            <Badge variant={p.prediccion === 'local' ? 'success' : p.prediccion === 'empate' ? 'warning' : 'info'}>
-                              {pickLabel(p.prediccion, p.matches as any)}
-                            </Badge>
+                            <PredictionCell prediction={p} match={p.matches as any} />
                           </td>
                           <td className="p-3 text-gray-400 text-xs">{formatFechaHora(p.submitted_at)}</td>
                         </tr>
@@ -229,6 +227,72 @@ function AdminPredictionForm({
       <Button size="sm" onClick={handleSave} disabled={!participantId || !prediccion || upsert.isPending}>
         Guardar predicción
       </Button>
+    </div>
+  )
+}
+
+function PredictionCell({ prediction, match }: { prediction: any; match: any }) {
+  const [editing, setEditing] = useState(false)
+  const [prediccion, setPrediccion] = useState<PickType>(prediction.prediccion)
+  const upsert = useUpsertPrediction()
+
+  if (!editing) {
+    return (
+      <div className="flex items-center gap-2">
+        <Badge variant={prediction.prediccion === 'local' ? 'success' : prediction.prediccion === 'empate' ? 'warning' : 'info'}>
+          {pickLabel(prediction.prediccion, match)}
+        </Badge>
+        <button onClick={() => setEditing(true)} className="text-gray-400 hover:text-gray-600" title="Editar predicción">
+          <Pencil className="h-3.5 w-3.5" />
+        </button>
+      </div>
+    )
+  }
+
+  const picks: { value: PickType; label: string }[] = [
+    { value: 'local', label: match?.equipo_local ?? 'Local' },
+    { value: 'empate', label: 'Empate' },
+    { value: 'visitante', label: match?.equipo_visitante ?? 'Visitante' },
+  ]
+
+  async function handleSave() {
+    try {
+      await upsert.mutateAsync({
+        participantId: prediction.participant_id,
+        matchId: prediction.match_id,
+        prediccion,
+      })
+      toast.success('Predicción actualizada')
+      setEditing(false)
+    } catch {
+      toast.error('Error al actualizar la predicción')
+    }
+  }
+
+  function handleCancel() {
+    setPrediccion(prediction.prediccion)
+    setEditing(false)
+  }
+
+  return (
+    <div className="flex items-center gap-1 flex-wrap">
+      {picks.map(pick => (
+        <button
+          key={pick.value}
+          onClick={() => setPrediccion(pick.value)}
+          className={`px-2 py-1 rounded-md text-xs font-medium transition-colors ${
+            prediccion === pick.value ? 'bg-green-600 text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+          }`}
+        >
+          {pick.label}
+        </button>
+      ))}
+      <button onClick={handleSave} disabled={upsert.isPending} className="text-green-600 hover:text-green-700" title="Guardar">
+        <Check className="h-4 w-4" />
+      </button>
+      <button onClick={handleCancel} className="text-gray-400 hover:text-gray-600" title="Cancelar">
+        <X className="h-4 w-4" />
+      </button>
     </div>
   )
 }
