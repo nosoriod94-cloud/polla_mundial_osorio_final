@@ -71,7 +71,16 @@ export function PrediccionesTab() {
   }
 
   function handleExport() {
-    exportToCsv(buildRows(filtered), 'predicciones_mundial_2026.csv')
+    exportToCsv(buildRows(filtered), buildExportFilename())
+  }
+
+  function buildExportFilename(): string {
+    if (filterJornada === 'all') return 'predicciones_mundial_2026.csv'
+    const jornada = (jornadas ?? []).find(j => j.nombre === filterJornada)
+    const sampleMatch = filtered[0]?.matches as any
+    const dia = jornada?.orden ? `dia${jornada.orden}_` : ''
+    const mes = sampleMatch?.fecha_hora ? diaMesSlug(sampleMatch.fecha_hora) : ''
+    return `predicciones_${dia}${mes}.csv`
   }
 
   function handleExportMatch(match: any, preds: typeof filtered) {
@@ -85,7 +94,7 @@ export function PrediccionesTab() {
     <div className="space-y-4">
       <div className="flex items-center justify-between flex-wrap gap-2">
         <p className="text-sm text-gray-600">{predictions?.length ?? 0} predicciones en total</p>
-        <Button size="sm" variant="outline" onClick={handleExport} disabled={!predictions?.length}>
+        <Button size="sm" variant="outline" onClick={handleExport} disabled={!filtered.length}>
           <Download className="h-4 w-4" />
           Exportar CSV
         </Button>
